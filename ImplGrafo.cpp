@@ -1,60 +1,53 @@
 #include "HeadG.h"
 
-GRAFO::GRAFO (char nombreFichero[]) {
+GRAPH::GRAPH (char nameFile[]){
 	unsigned i, j;
 	int c;
 	float x,y,z;
 	x=y=z=0;
-	m=0;
-	ElementoLista dummy,dummy2;
-	ifstream textfile;
+	arcs=0;
+	ElementList dummy,dummy2;
+	ifstream textFile;
+	textFile.open (nameFile);
 	
-	textfile.open (nombreFichero);
-	
-	if (textfile.is_open ()) {
-		
-		textfile >> (unsigned &) n;	// n = NODOS
-		LS.resize (n);  // tamano de las filas
+	if (textFile.is_open ()) {
+		textFile >> (unsigned &) nodes;	// n = NODOS
+		LS.resize (nodes);  // tamano de las filas
 		 
-		for(int ind=0;ind<n;ind++)
-		{  
-		  textfile >> (float &) x >> (float &) y;
-		  z= sqrt((pow(x,2))-(pow(y,2)));
-		  longitud.push_back((int)z);	
+		for(int ind=0;ind<nodes;ind++){
+		    textFile >> (float &) x >> (float &) y;
+		    z= sqrt((pow(x,2))-(pow(y,2)));
+		    lng.push_back((int)z);
 		};
 		
-		for (i = 0; i < n; i++ ) {
-		  ady.push_back ( vector<int>() );
-		  for (j = 0; j < n; j++ )
-		  {  
-		    textfile >> (int &) c ; 
-		    ady[i].push_back (c);
-		  }  
+		for (i = 0; i < nodes; i++ ) {
+		    ady.push_back (vector<int>());
+		    for (j = 0; j < nodes; j++ ){
+                textFile >> (int &) edges;
+                ady[i].push_back (edges);
+            }
 		}
 
-		textfile.close (); 
+		textFile.close ();
 
-		for(i=0;i<n;i++)
-		  for(j=0;j<n;j++)
-		  {
-		    if(ady.at(i).at(j) == 1 && j>i)
-		    {
-		        cout << i << " " << j << "\n";
-		        dummy.j = j;
-			dummy.c = longitud.at(i);
-			dummy.residuo = longitud.at(i);
-                       	dummy.inv = LS[j].size();
-			LS[i].push_back (dummy);
-			dummy2.j = i;  
-			// Incializa los campos del arco virtual y capacidad residual a 0
-                        dummy2.c = 0;                
-                        dummy2.residuo = 0;
-                        dummy2.inv = LS[i].size() - 1;
- 	                LS[j].push_back(dummy2);   
-			m++;
-                    }
-                    
-                 }
+		for(i=0;i<nodes;i++)
+		    for(j=0;j<nodes;j++){
+                if(ady.at(i).at(j) == 1 && j>i){
+                    cout << i << " " << j << "\n";
+                    dummy.node = j;
+                    dummy.weight = lng.at(i);
+                    dummy.residue = lng.at(i);
+                    dummy.inv = LS[j].size();
+                    LS[i].push_back (dummy);
+                    dummy2.node = i;
+                    // Incializa los campos del arco virtual y capacidad residual a 0
+                    dummy2.weight = 0;
+                    dummy2.residue = 0;
+                    dummy2.inv = LS[i].size() - 1;
+                    LS[j].push_back(dummy2);
+                    arcs++;
+                }
+            }
 	} 
 	else
 	{  
@@ -63,273 +56,226 @@ GRAFO::GRAFO (char nombreFichero[]) {
 	}	
 };
 
-
-void GRAFO::Mostrar_Grafo () 
-{
-	
+void GRAPH::viewGraph(){
 	cout << endl;
-	   
 	cout << "*******************************************************************" << endl;
-	cout << " - Numero de nodos: " << n << " - Numero de arcos: " << m << endl;
+	cout << " - Numero de nodos: " << nodes << " - Numero de arcos: " << arcs << endl;
 	cout << "*******************************************************************" << endl;
 	cout << " - Lista de Adyacencia de los Sucesores: " << endl; 
-	
-	for (unsigned k = 0; k < n; k++) 
-        {
-		
-	  cout << " * Sucesores del nodo " << k + 1 << " : ";
-		
-		for (unsigned i = 0; i < LS[k].size(); i++)
-		{
-		  cout << " " << (LS[k][i].j) + 1; //mostramos sumando uno, porque fue guardado restando uno
-		}
+
+	for (unsigned k = 0; k < nodes; k++){
+	    cout << " * Sucesores del nodo " << k + 1 << " : ";
+		    for (unsigned i = 0; i < LS[k].size(); i++){
+		        cout << " " << (LS[k][i].node) + 1; //mostramos sumando uno, porque fue guardado restando uno
+		    }
 		cout  << endl;
 	}
 };
 
-void GRAFO::dfs (unsigned i, vector<bool> &visitado){
-	visitado[i] = true;
+void GRAPH::dfs (unsigned i, vector<bool> &visited){
+	visited[i] = true;
 	cout << i + 1 << ",";
-
 	for (unsigned k = 0; k < LS[i].size(); k++) {
-		if (visitado[LS[i][k].j] == false)							//  para todo nodo j en LS[i] no visitado
-			dfs (LS[i][k].j, visitado);
+		if (visited[LS[i][k].node] == false) dfs (LS[i][k].node, visited);  //todo nodo j en LS[i] no visitado
 	}
-
 };
 
-GRAFO::~GRAFO () {}		// Destructor
+GRAPH::~GRAPH () {}
 
-// Devuelve la matriz de adyacencia del arbol minimo.
-void GRAFO :: kruskal(){
-    vector<LA_nodo> adyacencia = this->LS;
-    
-    vector< vector<int> > arbol(n);
-    vector<int> pertenece(n); // indica a que arbol pertenece el nodo
- 
-    for(int i = 0; i < n; i++){
-        arbol[i] = vector<int> (n, longitud[i]);
-        pertenece[i] = i;
+void GRAPH :: kruskal(){
+    vector<LA_node> adjacency= this->LS;
+    vector< vector<int> > tree(nodes);
+    vector<int> belongs(nodes); // indica a que arbol pertenece el nodo
+
+    for(int i = 0; i < nodes; i++){
+        tree[i] = vector<int> (nodes, lng[i]);
+        belongs[i] = i;
     }
- 
-    int nodoA;
-    int nodoB;
-    int arcos = 1;
-    
-    while(arcos < n)
-    {
+    int nodeA;
+    int nodeB;
+    int arcsX = 1;
+
+    while(arcsX < nodes){
         // Encontrar  el arco minimo que no forma ciclo y guardar los nodos y la distancia.
-        int min = longitud[0];
-        for(int i = 0; i < n; i++)
-            for(int j = 0; j < n; j++)
-                if(min > adyacencia[i][j].c && pertenece[i] != pertenece[j])
-		{
-                    min = adyacencia[i][j].c;
-                    nodoA = i;
-                    nodoB = j;	
-		    
+        int min = lng[0];
+        for(int i = 0; i < nodes; i++)
+            for(int j = 0; j < nodes; j++)
+                if(min > adjacency[i][j].weight && belongs[i] != belongs[j]){
+                    min = adjacency[i][j].weight;
+                    nodeA = i;
+                    nodeB = j;
                 }
- 
-        // Si los nodos no pertenecen al mismo arbol agrego el arco al arbol minimo.
-        if(pertenece[nodoA] != pertenece[nodoB]){
-            arbol[nodoA][nodoB] = min;
-            arbol[nodoB][nodoA] = min;
- 
-            // Todos los nodos del arbol del nodoB ahora pertenecen al arbol del nodoA.
-                int temp = pertenece[nodoB];
-                pertenece[nodoB] = pertenece[nodoA];
-                for(int k = 0; k < n; k++)
-                        if(pertenece[k] == temp)
-                                pertenece[k] = pertenece[nodoA];
- 
-            arcos++;
+                // Si los nodos no pertenecen al mismo arbol agrego el arco al arbol minimo.
+                if(belongs[nodeA] != belongs[nodeB]){
+                    tree[nodeA][nodeB] = min;
+                    tree[nodeB][nodeA] = min;
+                // Todos los nodos del arbol del nodoB ahora pertenecen al arbol del nodoA.
+                    int temp = belongs[nodeB];
+                    belongs[nodeB] = belongs[nodeA];
+                    for(int k = 0; k < nodes; k++)
+                        if(belongs[k] == temp) belongs[k] = belongs[nodeA];
+            arcsX++;
         }
     }
-  
   cout << "\n\nKRUSKAL: �rbol de expansi�n m�nimo del grafo.(longitudes)\n\n\n";
   for(int i = 0; i < 2; i++)
-            for(int j = 0; j < 2; j++) 
-	      cout << arbol[i][j] << "->";
+     for(int j = 0; j < 2; j++)
+	    cout << tree[i][j] << "->";
 	
 }
 
-// Recorrido en AMPLITUD
-void GRAFO::Amplitud(unsigned i,unsigned t, vector<unsigned> &pred, vector<unsigned> &pospred, vector<int> &CuelloBotella)
-{
-vector<unsigned> Cola;
-    Cola.begin();
-    int minimo=0;
-    Cola.push_back(i);
-    while (!Cola.empty()) {
-        int i=Cola.front();
-        Cola.erase(Cola.begin());  //borramos el primer elemento del vector
+void GRAPH::amplitude(unsigned i,unsigned t, vector<unsigned> &pred, vector<unsigned> &posPred, vector<int> &bottleneck){
+    vector<unsigned> queue;
+    queue.begin();
+    int mini=0;
+    queue.push_back(i);
+    while (!queue.empty()) {
+        int i=queue.front();
+        queue.erase(queue.begin());  //borramos el primer elemento del vector
         for (int k=0; k<LS[i].size(); k++) {
-            if (pred[LS[i][k].j]==UERROR && LS[i][k].residuo>0) {
-                pred[LS[i][k].j]=i;
-                pospred[LS[i][k].j]=k;
-                if (CuelloBotella[i]<LS[i][k].residuo) {
-                    minimo=CuelloBotella[i];
+            if (pred[LS[i][k].node]==UERROR && LS[i][k].residue>0) {
+                pred[LS[i][k].node]=i;
+                posPred[LS[i][k].node]=k;
+                if (bottleneck[i]<LS[i][k].residue) {
+                    mini=bottleneck[i];
                 }
                 else {
-                    minimo=LS[i][k].residuo;
+                    mini=LS[i][k].residue;
                 }
-                CuelloBotella[LS[i][k].j]=minimo;
-                Cola.push_back(LS[i][k].j);
+                bottleneck[LS[i][k].node]=mini;
+                queue.push_back(LS[i][k].node);
             }
         }
     }
 }
 
-
-void GRAFO::edmods_karp(){
-
-int maxflow = 0;                                                       //Suma de todos los cuellos de botella
-bool camino = true;
-unsigned s, t, k;
-vector<int> CuelloBotella;
-vector<unsigned> pred, pospred;
-
-   cout << "Introduzca el nodo fuente (1-" << n << "): ";
-   cin >> s;
-   s--;
-   cout << "Introduzca el nodo sumidero (1-" << n << "): ";
-   cin >> t;
-   t--;
-   cout << endl;
-   while (camino == true) {
-      pred.resize(n,UERROR);
-      pospred.resize(n);
-      CuelloBotella.resize(n, maxint);
-      for (unsigned k = 0; k < n; k++) {
-         pred[k] = UERROR;
-	 pospred[k] = 0;
-	 CuelloBotella[k] = maxint;
-      }
-      pred[s] = s;
-      Amplitud (s, t, pred, pospred, CuelloBotella);
-      if (pred[t] == UERROR) {
-         camino = false;
-	 cout <<"---------------------------------------------------------"<<endl;
-	 cout << "    Patron de Flujo Maximo es " << maxflow << endl;
-	 cout << endl;
-	 cout << "    El [S,T]-corte es: S= {";
-	 for (unsigned k = 0; k < n; k++) {
-	    if (pred[k] != UERROR) {
-	       cout << " " << k+1 << ",";
-	    }
-         }                                                     //Todos los nodos k tales que pred[k] <> UERROR
-         cout << " } y T = V-S"<<endl;
-      }
-      else {
-         maxflow += CuelloBotella[t];
-	 unsigned k = t;
-	 cout << "Camino Incremental: ";
-	 // actualizaci�n de las capacidades residuales
-	 MostrarCamino (s, t, pred);
-	 cout << " Cuello de botella: " << CuelloBotella[t];
-	 cout << endl;
-	 while (k != s)  {
-	    LS[pred[k]][pospred[k]].residuo -= CuelloBotella[t];
-	    LS[k][LS[pred[k]][pospred[k]].inv].residuo += CuelloBotella[t];
-	    k = pred[k];
-         }
-      }
+void GRAPH::edmodsKarp(){
+    int maxFlow = 0;                                                       //Suma de todos los cuellos de botella
+    bool way = true;
+    unsigned s, t, k;
+    vector<int> bottleneck;
+    vector<unsigned> pred, posPred;
+    cout << "Introduzca el nodo fuente (1-" << nodes << "): ";
+    cin >> s;
+    s--;
+    cout << "Introduzca el nodo sumidero (1-" << nodes << "): ";
+    cin >> t;
+    t--;
+    cout << endl;
+    while (way == true) {
+        pred.resize(nodes,UERROR);
+        posPred.resize(nodes);
+        bottleneck.resize(nodes, maxint);
+        for (unsigned k = 0; k < nodes; k++) {
+            pred[k] = UERROR;
+	        posPred[k] = 0;
+	        bottleneck[k] = maxint;
+        }
+        pred[s] = s;
+        amplitude(s, t, pred, posPred, bottleneck);
+        if (pred[t] == UERROR){
+            way = false;
+	        cout <<"---------------------------------------------------------"<<endl;
+	        cout << "    Patron de Flujo Maximo es " << maxFlow << endl;
+        	cout << endl;
+	        cout << "    El [S,T]-corte es: S= {";
+	        for (unsigned k = 0; k < nodes; k++) {
+	            if (pred[k] != UERROR) {
+	                cout << " " << k+1 << ",";
+	            }
+            }                                                     //Todos los nodos k tales que pred[k] <> UERROR
+            cout << " } y T = V-S"<<endl;
+        }else{
+            maxFlow += bottleneck[t];
+	        unsigned k = t;
+	        cout << "Camino Incremental: ";
+	        // actualizaci�n de las capacidades residuales
+	        showWay(s, t, pred);
+	        cout << " Cuello de botella: " << bottleneck[t];
+	        cout << endl;
+	        while (k != s)  {
+	            LS[pred[k]][posPred[k]].residue -= bottleneck[t];
+	            LS[k][LS[pred[k]][posPred[k]].inv].residue += bottleneck[t];
+	            k = pred[k];
+            }
+        }
    }
    cout << "    Patron de flujo maximo es:"<< endl;
-   for (unsigned i = 0; i < n; i++) {
-      for (unsigned k = 0; k < LS[i].size(); k++) {
-         if (LS[i][k].c > 0) {
-	    cout << "         X[" << i + 1 << ", " << LS[i][k].j + 1 << "] = " << LS[i][k].c - LS[i][k].residuo;
-	    cout << endl;
-	 }
-      }
-   }
+
+    for (unsigned i = 0; i < nodes; i++) {
+        for (unsigned k = 0; k < LS[i].size(); k++) {
+            if (LS[i][k].weight > 0) {
+           	    cout << "         X[" << i + 1 << ", " << LS[i][k].node + 1 << "] = " << LS[i][k].weight - LS[i][k].residue;
+           	    cout << endl;
+           	}
+        }
+    }
 }
 
-
-void GRAFO::Dijkstra() {
-	vector<bool> PermanentementeEtiquetado; 			// == Su camino minimo ya ha sido calculado
-	vector<int> d;												// vector de coste
+void GRAPH::Dijkstra(){
+	vector<bool> minWay; 			                        // == Su camino minimo ya ha sido calculado
+	vector<int> d;				                            // vector de coste
 	vector<unsigned> pred;
-	unsigned s, candidato, minimo = maxint, aux = 0;
-
-	PermanentementeEtiquetado.resize (n, false);				// etiquetados a false
-	d.resize (n, maxint);											// d es la etiqueta de distancia		(n) 		maxint = infinito
-	pred.resize (n, UERROR);										// Los predecesores son unicos, por lo que puedo usar un array
-
+	unsigned s, ca, mini = maxint, aux = 0;
+	minWay.resize (nodes, false);		    // etiquetados a false
+	d.resize (nodes, maxint);									// d es la etiqueta de distancia		(n) 		maxint = infinito
+	pred.resize (nodes, UERROR);								// Los predecesores son unicos, por lo que puedo usar un array
 	cout << endl;
-	cout << " - Introduzca el nodo de partida [1-" << n << "]: ";
+	cout << " - Introduzca el nodo de partida [1-" << nodes << "]: ";
 	cin >> s;
 	cout << endl;
-	
 	s--;
 	d[s]= 0;				// coste para llegar a el desde el = 0
 	pred[s]= s;				//pred del nodo elegido (i) = i
-	
-	do {
-		 
-		candidato = UERROR;
-		
-		while ((candidato == UERROR) && (aux < n)) {
-				if (PermanentementeEtiquetado[aux] == false)
-					candidato = aux;
+	do{
+		ca = UERROR;
+		while ((ca == UERROR) && (aux < nodes)) {
+				if (minWay[aux] == false)
+					ca = aux;
 				else
 					aux++;
 		}		//Sea candidato el nodo no etiquetado permanentemente con menor etiqueta distancia;
-		
-		
-		if (candidato != UERROR) {					// si me encuentro un nodo con una etiqueta no infinita
-			
-			minimo = d[candidato];
-			
-			for (unsigned j = 0; j < n; j++) {
-				
-				if (d[j] < minimo) { 
-					if (PermanentementeEtiquetado[j] == false) {
-						
-						minimo = d[j];
-						candidato = j;
+		if (ca != UERROR) {					// si me encuentro un nodo con una etiqueta no infinita
+			mini = d[ca];
+			for (unsigned j = 0; j < nodes; j++) {
+				if (d[j] < mini) {
+					if (minWay[j] == false) {
+						mini = d[j];
+						ca = j;
 					}
 				}
 			}
-			
-			PermanentementeEtiquetado[candidato] = true;
-				                       
-				for (unsigned k = 0; k < LS[candidato].size (); k++) {		// para todo nodo k en LS[candidato] 
-					
-					if (d[LS[candidato][k].j] > d[candidato] + LS[candidato][k].c) {		// d[LS[candidato][k].j]			LS[candidato][k].c
-						d[LS[candidato][k].j] = d[candidato] + LS[candidato][k].c;
-						pred[LS[candidato][k].j] = candidato;
-					}
-			    }
+			minWay[ca] = true;
+			for (unsigned k = 0; k < LS[ca].size (); k++) {		// para todo nodo k en LS[candidato]
+			    if (d[LS[ca][k].node] > d[ca] + LS[ca][k].weight) {		// d[LS[candidato][k].j]			LS[candidato][k].c
+					d[LS[ca][k].node] = d[ca] + LS[ca][k].weight;
+					pred[LS[ca][k].node] = ca;
+				}
+			}
 		}
-	} while (candidato != UERROR);
+	} while (ca != UERROR);
 	
-	for (int i = 0; i < n; i++) {				// Para todo nodo i!= s
-		
+	for (int i = 0; i < nodes; i++) {				// Para todo nodo i!= s
+
 		if (i != s) {
-			
-			if (pred[i] != UERROR)
-				MostrarCamino (s, i, pred, d);
+		    if (pred[i] != UERROR)
+			    showWay(s, i, pred, d);
 			else
 				cout << " * No hay Camino desde " << s + 1 << " al nodo " << i + 1 << endl;
 		}
 	}
 }
 
+void GRAPH::showWay (unsigned s, unsigned i, vector <unsigned> &pred){
 
-
-
-void GRAFO::MostrarCamino (unsigned s, unsigned i, vector <unsigned> &pred) {
-
-   if (i != s) {
-      MostrarCamino (s, pred[i], pred);
-   }
-   cout << i+1 << " -> ";
+    if (i != s) {
+        showWay (s, pred[i], pred);
+    }
+    cout << i+1 << " -> ";
 }
 
-void GRAFO::MostrarCamino (unsigned s, int i, vector<unsigned> &pred, vector<int> &d) {
-	
+void GRAPH::showWay(unsigned s, int i, vector<unsigned> &pred, vector<int> &d){
+
 	unsigned q = d[i];
 	cout << " - El camino desde " << s + 1 << " al nodo " << i + 1 << " es: " << i + 1;
 	
