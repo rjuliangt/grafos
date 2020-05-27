@@ -14,7 +14,7 @@ int main(int argc, char **argv)
     QApplication app(argc, argv);
 
     QGraphicsScene scene;
-    scene.setSceneRect(-300, -300, 600, 600);
+    scene.setSceneRect(-300, -200, 600, 600);
 
     scene.setItemIndexMethod(QGraphicsScene::NoIndex);
 
