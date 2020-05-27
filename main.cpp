@@ -1,40 +1,43 @@
-#include "HeadG.h"
-#include<iostream>
+#include <QtMath>
+#include <QtWidgets>
 
-using namespace std;
+#include "people.h"
 
-int main (){
-    char nombreFichero[30];
-    int opc,i,j;
-    int inicio=0,fin=0;
+static constexpr int MouseCount = 1;
 
-	cout << " RECORRIDO DE GRAFOS \n";
-    cout << " Introduzca el nombre del fichero: ";
-    cin >> nombreFichero;
-    GRAPH Ografo (nombreFichero);
-	Ografo.viewGraph();
-        
-	do{
-	    cout << "\n\nMENU: \n";
-	    cout << "\t1.Distancias y caminos m�nimos desde un v�rtice dado por el usuario aplicando el algoritmo de Dijkstra.\n";
-	    cout << "\t2.Aplicar el algoritmo de Edmonds-karp.\n";
-	    cout << "\t3.Aplicar el algoritmo de Kruskal.\n";
-	    cout << "\t4.SALIR.\n\n";
-	    cin >> opc;
-	    switch(opc){
-	        case(1):
-        	    Ografo.Dijkstra();
-        	    break;
-            case(2):
-        	    Ografo.edmodsKarp();
-        	    break;
-            case(3):
-        	    Ografo.kruskal();
-        	    break;
-        	case(4):
-        	    break;
-	    };
-	}while( opc != 4);
-    return 0;
+int main(int argc, char **argv)
+{
+
+#ifdef Q_OS_ANDROID
+    QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+#endif
+    QApplication app(argc, argv);
+
+    QGraphicsScene scene;
+    scene.setSceneRect(-300, -300, 600, 600);
+
+    scene.setItemIndexMethod(QGraphicsScene::NoIndex);
+
+    for (int i = 0; i < MouseCount; ++i) {
+        People *people = new People;
+        people->setPos(::sin((i * 6.28) / MouseCount) * 200,
+                      ::cos((i * 6.28) / MouseCount) * 200);
+        scene.addItem(people);
+    }
+
+    QGraphicsView view(&scene);
+    view.setRenderHint(QPainter::Antialiasing);
+    view.setBackgroundBrush(QPixmap(":/images/em.png"));
+
+    view.setCacheMode(QGraphicsView::CacheBackground);
+    view.setViewportUpdateMode(QGraphicsView::BoundingRectViewportUpdate);
+    view.setDragMode(QGraphicsView::ScrollHandDrag);
+    view.setWindowTitle(QT_TRANSLATE_NOOP(QGraphicsView, "Colliding Mice"));
+    view.resize(400, 300);
+    view.show();
+
+    QTimer timer;
+    QObject::connect(&timer, &QTimer::timeout, &scene, &QGraphicsScene::advance);
+    timer.start(1000 / 33);
+    return app.exec();
 }
-
